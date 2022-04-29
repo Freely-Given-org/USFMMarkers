@@ -1,0 +1,45 @@
+name: validate-xml
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+     - main
+    paths: 'sourceXML/*'
+
+jobs:
+  create-rng-and-then-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: create-rng-from-rnc
+        run: sudo apt-get install trang
+        run: trang sourceXML/BibleBooksCodes.rnc derivedFormats/BibleBooksCodes.rng
+      - name: Commit files # transfer the new schema back to the repo
+        run: |
+          git config --local user.name "RobH123"
+          git add derivedFormats/BibleBooksCodes.rng
+          git commit -m "Updating the .rng schema from the .rnc file"
+      - name: validate-against-rng-and-dtd
+        run: sudo apt-get install libxml2-utils # to install xmllint
+        run: xmllint --noout --relaxng derivedFormats/BibleBooksCodes.rng --valid sourceXML/BibleBooksCodes.xml
+      - name: update-derived-tables
+        run: |
+          cd Python
+          # Run the Python converter to read the XML and export the derived formats
+          python BibleBooksCodesConverter.py --export
+          # We copy the JSON into the Rust src so its contents can go in the crate
+          cp -a ../derivedFormats/BibleBooksCodes_Tables.json  ../Rust/src/
+          cp -a ../JavaScript/prelude.js  ../JavaScript/BibleBooksCodes_Tables.js
+          cat ../derivedFormats/BibleBooksCodes_Tables.json  >> ../JavaScript/BibleBooksCodes_Tables.js
+          cat ../JavaScript/postscript.js  >> ../JavaScript/BibleBooksCodes_Tables.js
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          force: true
+      - name: Commit files # transfer the new derived tables back into the repository
+        run: |
+          git config --local user.name "RobH123"
+          git add derivedFormats/BibleBooksCodes_Tables.*
+          git commit -m "Updating the data tables derived from the XML"
