@@ -1,6 +1,6 @@
 # USFM Markers (BibleOrgSys/BOS USFM Markers)
 
-A set of tables encoding USFM 3 markers from https://ubsicap.github.io/usfm/ (forked here as https://github.com/Freely-Given-org/usfm).
+A set of tables encoding USFM 3 markers from https://ubsicap.github.io/usfm (forked here as https://github.com/Freely-Given-org/usfm). See also https://docs.usfm.bible.
 
 ## Introduction
 
